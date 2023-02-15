@@ -259,7 +259,7 @@ if __name__ == "__main__":
         )
         parser.add_argument(
             "--usecollections",
-            action="store_true"
+            action="store_true",
             help="use collections instead of folders",
         )
         parser.add_argument(
