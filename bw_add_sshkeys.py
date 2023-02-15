@@ -95,7 +95,8 @@ def get_folders(session: str, foldername: str, usecollections: bool = False) -> 
     """
     Function to return the ID  of the folder/collection that matches the provided name
     """
-    logging.debug("Folder/Collection name: %s", foldername)
+    folder_collection_str = "Collection" if usecollections else "Folder"
+    logging.debug("%s name: %s", folder_collection_str, foldername)
     
     folder_collection_option = "collections" if usecollections else "folders"
     proc_folders = subprocess.run(
@@ -109,12 +110,12 @@ def get_folders(session: str, foldername: str, usecollections: bool = False) -> 
     folders = json.loads(proc_folders.stdout)
 
     if not folders:
-        logging.error('"%s" folder/collection not found', foldername)
+        logging.error('"%s" %s not found', foldername, folder_collection_str.lower())
         return ""
 
     # Do we have any folders/collections
     if len(folders) != 1:
-        logging.error('%d folders/collections with the name "%s" found', len(folders), foldername)
+        logging.error('%d %ss with the name "%s" found', len(folders), folder_collection_str.lower(), foldername)
         return ""
 
     return str(folders[0]["id"])
@@ -124,7 +125,8 @@ def folder_items(session: str, folder_id: str, usecollections: bool = False) -> 
     """
     Function to return items from a folder/collection
     """
-    logging.debug("Folder/Collection ID: %s", folder_id)
+    folder_collection_str = "Collection" if usecollections else "Folder"
+    logging.debug("%s ID: %s", folder_collection_str, folder_id)
     
     folder_collection_option = "--collectionid" if usecollections else "--folderid"
     proc_items = subprocess.run(
