@@ -106,7 +106,7 @@ def get_folders(session: str, foldername: str, usecollections: bool = False) -> 
         encoding="utf-8",
     )
 
-    collections = json.loads(proc_collections.stdout)
+    folders = json.loads(proc_folders.stdout)
 
     if not folders:
         logging.error('"%s" folder/collection not found', foldername)
@@ -117,7 +117,7 @@ def get_folders(session: str, foldername: str, usecollections: bool = False) -> 
         logging.error('%d folders/collections with the name "%s" found', len(folders), foldername)
         return ""
 
-    return str(collections[0]["id"])
+    return str(folders[0]["id"])
 
 
 def folder_items(session: str, folder_id: str, usecollections: bool = False) -> List[Dict[str, Any]]:
