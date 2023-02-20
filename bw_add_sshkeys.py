@@ -91,14 +91,16 @@ def get_session(session: str) -> str:
     return session
 
 
-def get_folders(session: str, foldername: str) -> str:
+def get_folders(session: str, foldername: str, usecollections: bool = False) -> str:
     """
-    Function to return the ID  of the folder that matches the provided name
+    Function to return the ID  of the folder/collection that matches the provided name
     """
-    logging.debug("Folder name: %s", foldername)
-
+    folder_collection_str = "Collection" if usecollections else "Folder"
+    logging.debug("%s name: %s", folder_collection_str, foldername)
+    
+    folder_collection_option = "collections" if usecollections else "folders"
     proc_folders = subprocess.run(
-        ["bw", "list", "folders", "--search", foldername, "--session", session],
+        ["bw", "list", folder_collection_option, "--search", foldername, "--session", session],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -108,25 +110,27 @@ def get_folders(session: str, foldername: str) -> str:
     folders = json.loads(proc_folders.stdout)
 
     if not folders:
-        logging.error('"%s" folder not found', foldername)
+        logging.error('"%s" %s not found', foldername, folder_collection_str.lower())
         return ""
 
-    # Do we have any folders
+    # Do we have any folders/collections
     if len(folders) != 1:
-        logging.error('%d folders with the name "%s" found', len(folders), foldername)
+        logging.error('%d %ss with the name "%s" found', len(folders), folder_collection_str.lower(), foldername)
         return ""
 
     return str(folders[0]["id"])
 
 
-def folder_items(session: str, folder_id: str) -> List[Dict[str, Any]]:
+def folder_items(session: str, folder_id: str, usecollections: bool = False) -> List[Dict[str, Any]]:
     """
-    Function to return items from a folder
+    Function to return items from a folder/collection
     """
-    logging.debug("Folder ID: %s", folder_id)
-
+    folder_collection_str = "Collection" if usecollections else "Folder"
+    logging.debug("%s ID: %s", folder_collection_str, folder_id)
+    
+    folder_collection_option = "--collectionid" if usecollections else "--folderid"
     proc_items = subprocess.run(
-        ["bw", "list", "items", "--folderid", folder_id, "--session", session],
+        ["bw", "list", "items", folder_collection_option, folder_id, "--session", session],
         stdout=subprocess.PIPE,
         universal_newlines=True,
         check=True,
@@ -256,10 +260,16 @@ if __name__ == "__main__":
             help="show debug output",
         )
         parser.add_argument(
+            "--usecollections",
+            action="store_true",
+            help="use collections instead of folders",
+        )
+        parser.add_argument(
             "-f",
             "--foldername",
+            "--collectionname",
             default="ssh-agent",
-            help="folder name to use to search for SSH keys",
+            help="folder/collection name to use to search for SSH keys",
         )
         parser.add_argument(
             "-c",
@@ -301,11 +311,12 @@ if __name__ == "__main__":
             session = get_session(args.session)
             logging.debug("Session = %s", session)
 
-            logging.info("Getting folder list")
-            folder_id = get_folders(session, args.foldername)
+            folder_collection_str = 'collection' if args.usecollections else 'folder'
+            logging.info("Getting %ss list", folder_collection_str)
+            folder_id = get_folders(session, args.foldername, args.usecollections)
 
-            logging.info("Getting folder items")
-            items = folder_items(session, folder_id)
+            logging.info("Getting %s items", folder_collection_str)
+            items = folder_items(session, folder_id, args.usecollections)
 
             logging.info("Attempting to add keys to ssh-agent")
             add_ssh_keys(session, items, args.customfield, args.passphrasefield)
